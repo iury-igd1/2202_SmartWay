@@ -20,7 +20,6 @@
   <a href="#arquitetura">Entenda a arquitetura</a> ·
   <a href="#execucao">Execute o protótipo</a> ·
   <a href="#arquivos">Explore os arquivos</a> ·
-  <a href="https://eteacojeorg-my.sharepoint.com/:o:/g/personal/iury_souza_edu_etefmc_com_br/IgDuZ5tOZYT5RrS-5chnWQInAXWTRA5idvHaHn-ZRV22YVc">Diário de bordo</a>
 </p>
 
 ---
@@ -128,10 +127,6 @@ O firmware e o simulador contêm um IP fixo do servidor; o firmware também cont
 | [Diário de bordo](https://eteacojeorg-my.sharepoint.com/:o:/g/personal/iury_souza_edu_etefmc_com_br/IgDuZ5tOZYT5RrS-5chnWQInAXWTRA5idvHaHn-ZRV22YVc) | Registro externo do desenvolvimento do projeto. |
 | [`LICENSE`](LICENSE) | Condições proprietárias de uso. |
 
-Os arquivos da PCB e do case registram o protótipo **já construído em 2025**. O esquemático incluído foi reconstruído depois a partir do layout: sua lista de componentes e redes foi comparada com o `.brd`, mas ele não foi reaberto em um editor EAGLE/Fusion.
-
 ### Publicação e licença
 
 O código e os materiais próprios do projeto estão sob [licença proprietária](LICENSE). Bibliotecas e imagens externas mantêm as condições de seus titulares.
-
-O [firmware](firmware/codigo-oficial/codigo-oficial.ino) contém uma senha Wi-Fi escrita diretamente no código. **Antes de publicar o repositório de forma pública, confirme que a credencial antiga foi desativada ou remova-a de uma cópia destinada à publicação.** O `.gitignore` não oculta conteúdo de arquivos rastreados.

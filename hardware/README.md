@@ -31,7 +31,7 @@ Os sinais do layout correspondem aos GPIOs usados no firmware: **0** para bateri
 
 ## As duas peças do case
 
-Os STL são binários e não registram unidade. **Se foram exportados em milímetros**, suas caixas delimitadoras são:
+Os STL são binários e não registram unidade. **Se exportados em milímetros**, suas caixas delimitadoras são:
 
 | Peça | X × Y × Z | Triângulos |
 | --- | --- | ---: |
