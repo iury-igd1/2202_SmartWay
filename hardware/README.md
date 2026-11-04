@@ -29,14 +29,6 @@ O contorno da PCB mede **51,74 × 44,762 mm**. O layout contém **17 componentes
 
 Os sinais do layout correspondem aos GPIOs usados no firmware: **0** para bateria, **2** para vibração, **3** para botão, **4/5/6** para I2S, **8/9** para DFPlayer e **10** para LED. O divisor de dois resistores iguais explica o fator 2 aplicado à tensão lida em `checkBattery()`.
 
-## Por que o esquemático foi reconstruído
-
-Os arquivos `Pulseira_v2.sch` e `Pulseira_v2.fsch` recebidos fora do repositório representam a mesma configuração elétrica, mas **não coincidiam com o `.brd`**. Neles, botão e vibração usavam GPIOs trocados; o LED estava no GPIO 7 sem o `R3` de 100 kΩ; e o DFPlayer recebia alimentação antes do regulador.
-
-Para documentar a placa existente, foi criado [`pulseira2202.sch`](pulseira2202.sch) como cópia corrigida. Os arquivos originais permaneceram intactos. Uma comparação automática confirmou **17 componentes físicos com os mesmos encapsulamentos e 18 redes com os mesmos contatos componente/pad** do `.brd`. Também foram conferidos os extremos dos fios e as etiquetas de rede do novo desenho.
-
-Essa é uma **correspondência lógica dos arquivos XML**. O esquemático corrigido não é o arquivo histórico usado na fabricação e não foi aberto em um editor EAGLE/Fusion para ERC ou DRC. Essas verificações não são apresentadas como parte do processo de fabricação já concluído.
-
 ## As duas peças do case
 
 Os STL são binários e não registram unidade. **Se foram exportados em milímetros**, suas caixas delimitadoras são:
@@ -45,5 +37,3 @@ Os STL são binários e não registram unidade. **Se foram exportados em milíme
 | --- | --- | ---: |
 | Base | 61,428 × 66 × 12,458 mm | 1.650 |
 | Topo | 58,940 × 66 × 26,000 mm | 532 |
-
-As peças aparecem lado a lado nos eixos dos arquivos, não na posição de montagem. A análise das malhas encontrou arestas compartilhadas por duas faces e nenhum triângulo de área zero. O topo é uma malha conectada; a base tem um corpo principal e duas pequenas geometrias separadas por vértices. Os arquivos não permitem concluir como essas geometrias foram unidas no fatiamento usado em 2025 nem medir o encaixe do case já produzido.

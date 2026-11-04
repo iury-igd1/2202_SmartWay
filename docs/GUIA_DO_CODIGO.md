@@ -44,7 +44,7 @@ O código também fixa o nome e a senha da rede, o IP e a porta 5000 do servidor
 
 ### Faixas esperadas no cartão SD
 
-Os números são os argumentos passados a `myDFPlayer.play(...)`; os arquivos de áudio não estão no material recebido.
+Os números são os argumentos passados a `myDFPlayer.play(...)`; os arquivos de áudio não estão neste repositório.
 
 | Faixa | Constante | Uso |
 | --- | --- | --- |

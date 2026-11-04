@@ -19,7 +19,8 @@
   <a href="#fluxo">Acompanhe a viagem</a> ·
   <a href="#arquitetura">Entenda a arquitetura</a> ·
   <a href="#execucao">Execute o protótipo</a> ·
-  <a href="#arquivos">Explore os arquivos</a>
+  <a href="#arquivos">Explore os arquivos</a> ·
+  <a href="https://eteacojeorg-my.sharepoint.com/:o:/g/personal/iury_souza_edu_etefmc_com_br/IgDuZ5tOZYT5RrS-5chnWQInAXWTRA5idvHaHn-ZRV22YVc">Diário de bordo</a>
 </p>
 
 ---
@@ -124,6 +125,7 @@ O firmware e o simulador contêm um IP fixo do servidor; o firmware também cont
 | [`software/`](software/README.md) | API, simulador, dados de rotas e dependências Python. |
 | [`hardware/`](hardware/README.md) | Layout EAGLE, esquemático corrigido e peças STL do case. |
 | [`docs/GUIA_DO_CODIGO.md`](docs/GUIA_DO_CODIGO.md) | Funções, estados e rotas HTTP em detalhe. |
+| [Diário de bordo](https://eteacojeorg-my.sharepoint.com/:o:/g/personal/iury_souza_edu_etefmc_com_br/IgDuZ5tOZYT5RrS-5chnWQInAXWTRA5idvHaHn-ZRV22YVc) | Registro externo do desenvolvimento do projeto. |
 | [`LICENSE`](LICENSE) | Condições proprietárias de uso. |
 
 Os arquivos da PCB e do case registram o protótipo **já construído em 2025**. O esquemático incluído foi reconstruído depois a partir do layout: sua lista de componentes e redes foi comparada com o `.brd`, mas ele não foi reaberto em um editor EAGLE/Fusion.

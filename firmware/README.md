@@ -40,6 +40,4 @@ O firmware emite um alerta antecipado quando o ETA entra em **3 a 7 minutos** e 
 
 ## Dependências e configuração
 
-Abra `codigo-oficial/codigo-oficial.ino` no Arduino IDE com suporte à placa ESP32 e as bibliotecas **ArduinoJson** e **DFRobotDFPlayerMini** instaladas. A versão de placa e as versões das bibliotecas usadas em 2025 não constam nos arquivos recebidos.
-
-O nome da rede, sua senha, o IP do servidor e a porta estão definidos no início do `.ino`. O servidor precisa ser acessível pela mesma rede. A senha ficou no código original para preservar o comportamento recebido; confirme sua desativação antes de publicar o repositório publicamente.
+Abra `codigo-oficial/codigo-oficial.ino` no Arduino IDE com suporte à placa ESP32 e as bibliotecas **ArduinoJson** e **DFRobotDFPlayerMini** instaladas.
