@@ -1,0 +1,22 @@
+# Ambientes e arquivos gerados pelo Python.
+.venv/
+venv/
+**/venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Gravações e registros produzidos durante o uso.
+/software/uploads/
+/software/viagens_log.txt
+/software/transcricoes_nao_reconhecidas.txt
+*.log
+
+# Arquivos locais de editores e do sistema.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

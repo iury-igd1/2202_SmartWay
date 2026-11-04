@@ -1,0 +1,59 @@
+{
+  "paradaColorido": {
+    "vermelho": { "url": "https://i.postimg.cc/mkhmgfmw/parada-vermelho.png", 
+        "size": [23, 40], "anchor": [12, 35], "popup": [0, -38], "zIndex": 500 },
+    "verde": { "url": "https://i.postimg.cc/4NDWs0V6/parada-verde.png", 
+        "size": [23, 40], "anchor": [12, 35], "popup": [0, -38], "zIndex": 500 },
+    "rosa": { "url": "https://i.postimg.cc/FzqDfWqQ/parada-rosa.png", 
+        "size": [23, 40], "anchor": [12, 35], "popup": [0, -38], "zIndex": 500 },
+    "amarelo": { "url": "https://i.postimg.cc/BQLhW3LZ/parada-amarelo.png", 
+        "size": [23, 40], "anchor": [12, 35], "popup": [0, -38], "zIndex": 500 }
+  },
+
+  "paradaPadrao": { "url": "https://i.postimg.cc/NGPNPF0P/parada-azul.png", 
+    "size": [18, 30], "anchor": [9, 26], "popup": [0, -28], "zIndex": 1500 },
+  "paradaDimmed": { "url": "https://i.postimg.cc/NGPNPF0P/parada-azul.png", 
+    "size": [12, 20], "anchor": [6, 18], "popup": [0, -20], "zIndex": 1 },
+    
+  "personagens": [
+    { "url": "https://i.postimg.cc/X7y54hdg/homem1.png", 
+        "size": [35, 60], "anchor": [17, 58], "zIndex": 1000 },
+    { "url": "https://i.postimg.cc/VshMy1r6/mulher1.png", 
+        "size": [35, 60], "anchor": [17, 58], "zIndex": 1000 },
+    { "url": "https://i.postimg.cc/QCvWckG5/homem2.png", 
+        "size": [35, 60], "anchor": [17, 58], "zIndex": 1000 },
+    { "url": "https://i.postimg.cc/NFKHyCVB/mulher2.png", 
+        "size": [35, 60], "anchor": [17, 58], "zIndex": 1000 }
+  ],
+
+  "destino": {
+    "vermelho": { "url": "https://i.postimg.cc/ZKJ79BrX/vermelho-removebg-preview-3.png", 
+        "size": [25, 36], "anchor": [8, 21], "popup": [0, -23] },
+    "verde": { "url": "https://i.postimg.cc/T2VNYqWr/verde-removebg-preview.png", 
+        "size": [25, 36], "anchor": [8, 21], "popup": [0, -23] },
+    "rosa": { "url": "https://i.postimg.cc/j24Mgtr8/rosa-removebg-preview.png", 
+        "size": [25, 36], "anchor": [8, 21], "popup": [0, -23] },
+    "amarelo": { "url": "https://i.postimg.cc/rFgh5Vjs/amarelo-removebg-preview.png", 
+        "size": [25, 36], "anchor": [8, 21], "popup": [0, -23] }
+  },
+
+  "onibusUrls": {
+    "vermelho": "https://i.postimg.cc/NfmrC9dW/icon-Vermelho-removebg-preview.png",
+    "verde": "https://i.postimg.cc/4xGHDfMn/icon-Verde-removebg-preview.png",
+    "rosa": "https://i.postimg.cc/05LwCd0Y/icon-Rosa-removebg-preview.png",
+    "amarelo": "https://i.postimg.cc/nMbpQL7m/icon-Amarelo-removebg-preview.png"
+  },
+  
+"onibusConfig": {
+    "normal": { "zIndex": 1000 },
+    "emViagem": { "size": [52, 33], "anchor": [26, 16.5], "zIndex": 1002 },
+    "destacado": { "zIndex": 1001 },
+    "dimmed": { "zIndex": 999 }
+  },
+  "definindoRota": {
+    "url": "https://i.postimg.cc/NFwhhgdP/alvo-rota.png"
+  },
+  "erroRota": {
+    "url": "https://i.postimg.cc/Ss90tXfM/x-erro.png"
+  }
+}

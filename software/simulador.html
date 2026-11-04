@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>SmartWay - Grupo 2202</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600;700&display=swap" rel="stylesheet">
+
+
+    <style>
+      html, body {
+        margin: 0; padding: 0; height: 100%; width: 100%;
+        font-family: "Inter Tight", sans-serif; overflow: hidden; background-color: #f0f0f0;
+      }
+      #map { height: 100%; margin-right: 450px; }
+      #painelViagem { 
+        display: flex; flex-direction: column; background-color: #ffffff; 
+        border: 1px solid #dee2e6; border-radius: 10px; margin-top: 10px; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.3s ease; 
+        min-height: 120px;
+      }
+      .painel-viagem-body {
+        padding: 14px;
+        transition: all 0.4s ease-in-out;
+      }
+      .painel-viagem-body.placeholder-centered {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .painel-viagem-ponto, .painel-viagem-placeholder {
+          opacity: 1; transition: opacity 0.5s ease-in-out, max-height 0.5s ease-in-out;
+          max-height: 100px; overflow: hidden;
+      }
+      .painel-viagem-ponto.hidden, .painel-viagem-placeholder.hidden {
+          opacity: 0; max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0;
+      }
+      #viagemProgressoContainer {
+        height: 8px; background-color: #e9ecef; border-radius: 0 0 10px 10px;
+        overflow: hidden; transition: opacity 0.5s; margin-top: auto;
+      }
+      #viagemProgressoBarra {
+        height: 100%; width: 0%; background-color: #0d6efd; transition: width 0.5s ease-out;
+      }
+      .leaflet-control-attribution { float: left !important; background: rgba(255, 255, 255, 0.7) !important; padding: 2px 5px; border-radius: 5px; }
+      @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+      .marker-fade-in { animation: fadeIn 0.5s ease-out; }
+      @keyframes flashGreen { 0% { box-shadow: 0 0 0 0 rgba(75, 180, 76, 0.7); } 70% { box-shadow: 0 0 8px 12px rgba(75, 180, 76, 0); } 100% { box-shadow: 0 0 0 0 rgba(75, 180, 76, 0); } }
+      .flash-green { animation: flashGreen 1s ease-out; }
+      .controls { position: absolute; bottom: 15px; left: 15px; z-index: 999; background: linear-gradient(145deg, #ffffff, #e6e6e6); padding: 12px; border-radius: 12px; box-shadow: 5px 5px 10px #bebebe, -5px -5px 10px #ffffff; display: flex; flex-direction: column; gap: 12px; width: 170px; }
+      .custom-checkbox-container { font-size: 13px; font-weight: 600; color: #34495e; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+      .custom-checkbox-container input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 1px solid #95a5a6; border-radius: 4px; position: relative; cursor: pointer; outline: none; transition: background-color 0.2s, border-color 0.2s; }
+      .custom-checkbox-container input[type="checkbox"]:checked { background-color: #3498db; border-color: #3498db; }
+      .custom-checkbox-container input[type="checkbox"]:checked::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: translate(-50%, -50%) rotate(45deg); }
+      .clock { font-weight: 700; font-size: 20px; text-align: center; background-color: #2c3e50; color: white; padding: 5px 10px; border-radius: 8px; box-shadow: inset 2px 2px 4px #1a252f, inset -2px -2px 4px #3e5771; }
+      .controls .buttons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      button { background: #3498db; border: none; color: white; padding: 8px 12px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: "Inter Tight", sans-serif; transition: all 0.2s ease; box-shadow: 3px 3px 6px #b8b9be, -3px -3px 6px #ffffff; }
+      button:hover { background-color: #2980b9; box-shadow: 1px 1px 2px #b8b9be, -1px -1px 2px #ffffff; }
+      button:active { background-color: #2c3e50; box-shadow: inset 2px 2px 4px #1a252f, inset -2px -2px 4px #3e5771; }
+      button:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; }
+      .slider-container { text-align: center; }
+      .slider-container small { font-weight: 600; color: #34495e; }
+      .slider { width: 100%; cursor: pointer; margin-top: 4px; }
+      .sidebar { position: absolute; top: 0; right: 0; width: 450px; height: 100%; background: #fdfdfd; box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); padding: 20px 16px 10px 16px; z-index: 1000; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; }
+      #statusContainer { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; overflow-y: auto; padding-top: 5px; padding-bottom: 5px; }
+      .linha-onibus { padding: 12px; border-radius: 8px; background: #f8f9fa; border: 1px solid #e9ecef; border-left-width: 5px; transition: opacity 0.3s ease-in-out, box-shadow 0.3s ease, transform 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; position: relative; overflow: hidden; }
+      .linha-onibus.vermelho { border-left-color: #F71818; }
+      .linha-onibus.verde { border-left-color: #4BB44C; }
+      .linha-onibus.rosa { border-left-color: #E94D85; }
+      .linha-onibus.amarelo { border-left-color: #FBC023; }
+      .linha-onibus.dimmed { opacity: 0.3; }
+      .linha-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      .linha-info { display: flex; align-items: center; gap: 10px; }
+      .linha-onibus .icone { width: 48px; height: 30px; flex-shrink: 0; }
+      .linha-titulo-container h4 { margin: 0; font-size: 15px; font-weight: 700; color: #212529; }
+      .linha-titulo-container .subtitulo { margin: 0; font-size: 12px; color: #6c757d; }
+      .linha-onibus .visibility-toggle-container { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; cursor: pointer; position: absolute; top: 5px; right: 5px; }
+      .linha-onibus .visibility-toggle { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border: 1px solid #95a5a6; border-radius: 3px; position: relative; cursor: pointer; outline: none; transition: background-color 0.2s, border-color 0.2s; }
+      .linha-onibus .visibility-toggle:checked { background-color: #3498db; border-color: #3498db; }
+      .linha-onibus .visibility-toggle:checked::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: translate(-50%, -50%) rotate(45deg); }
+      .status-box { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-top: 10px; }
+      .status-box.em-rota { background-color: #d1e7dd; color: #0f5132; }
+      .status-box.fora-de-rota { background-color: #e2e3e5; color: #41464b; }
+      .linha-actions { display: flex; gap: 8px; margin-top: 8px; }
+      .highlight-button, .horario-button { padding: 5px 10px; font-size: 12px; flex-grow: 1; }
+      .horario-button { background-color: #6c757d; }
+      .horario-button:hover { background-color: #5a6268; }
+      .progress-bar-container { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background-color: #e9ecef; }
+      .progress-bar { height: 100%; width: 0%; transition: width 0.2s linear; }
+      .progress-bar.vermelho { background-color: #F71818; }
+      .progress-bar.verde { background-color: #4BB44C; }
+      .progress-bar.rosa { background-color: #E94D85; }
+      .progress-bar.amarelo { background-color: #FBC023; }
+      .timeline-container { width: 100%; position: relative; height: 25px; margin-top: 10px; background: #bdc3c7; border-radius: 12px; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2); }
+      .timeline-bar { position: absolute; height: 100%; background: #2c3e50; border-radius: 12px; transition: width 0.1s linear; }
+      .timeline-handle { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: #f1c40f; border-radius: 50%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); cursor: ew-resize; }
+      .parada-popup .leaflet-popup-content-wrapper { background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); border: 1px solid #e0e0e0; }
+      .parada-popup .leaflet-popup-content { margin: 0; font-family: "Inter Tight", sans-serif; min-width: 220px; }
+      .parada-popup-header { padding: 12px 14px; background-color: #f8f9fa; border-bottom: 1px solid #e9ecef;}
+      .parada-popup-header h4 { margin: 0; padding: 0; font-size: 16px; font-weight: 700; color: #2c3e50; line-height: 1.3;}
+      .parada-popup-header small { font-size: 13px; color: #6c757d; display: block; margin-top: 2px;}
+      .parada-popup-body { padding: 8px 14px 12px 14px; }
+      .parada-popup-dinamico-vazio { text-align: center; color: #6c757d; font-style: italic; font-size: 13px; padding: 10px 0; }
+      .onibus-proximo-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+      .onibus-proximo-item:last-child { margin-bottom: 0; }
+      .onibus-proximo-item img { width: 36px; height: 23px; }
+      .onibus-proximo-info span { display: block; font-size: 14px; color: #2c3e50; font-weight: 600; }
+      .onibus-proximo-info small { font-size: 12px; color: #6c757d; }
+      .parada-popup-referencias {
+          margin-top: 12px;
+          padding-top: 10px;
+          border-top: 1px solid #e9ecef;
+      }
+      .parada-popup-referencias strong {
+          display: block;
+          font-size: 13px;
+          font-weight: 700;
+          color: #2c3e50;
+          margin-bottom: 5px;
+      }
+      .parada-popup-referencias ul {
+          list-style-type: none;
+          padding: 0;
+          margin: 0;
+          font-size: 13px;
+          color: #495057;
+      }
+      .parada-popup-referencias li {
+          margin-bottom: 3px;
+          padding-left: 14px;
+          position: relative;
+      }
+       .parada-popup-referencias li::before {
+          content: '•';
+          position: absolute;
+          left: 0;
+          color: #3498db;
+      }
+      .horario-popup { position: absolute; z-index: 2000; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); border: 1px solid #e0e0e0; box-sizing: border-box; }
+      .horario-popup::before { content: ''; position: absolute; bottom: 100%; left: var(--arrow-left-offset, 50%); transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 8px solid #f8f9fa; }
+      .horario-popup-header { padding: 10px 14px; background-color: #f8f9fa; border-bottom: 1px solid #e9ecef; }
+      .horario-popup-close { position: absolute; top: 2px; right: 4px; background: none; border: none; font-size: 24px; line-height: 1; color: #aaaaaa; font-weight: 300; cursor: pointer; padding: 5px; transition: color 0.2s ease; }
+      .horario-popup-close:hover { color: #333333; }
+      .horario-popup-header h4 { margin: 0; font-size: 15px; font-weight: 700; color: #2c3e50; }
+      .horario-popup-header small { margin: 0; font-size: 12px; color: #6c757d; }
+      .horario-popup-content { padding: 12px; }
+      .horario-popup .times { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;}
+      .horario-popup.full-width .times { max-width: none;}
+      .horario-popup:not(.full-width) .times { max-width: 180px;}
+      .horario-popup .time-chip { background-color: #eaf0f2; color: #34495e; padding: 5px 10px; border-radius: 15px; font-weight: 600; font-size: 13px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+      .painel-viagem-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid #e9ecef; }
+      .painel-viagem-header-info { display: flex; align-items: center; gap: 12px; }
+      .painel-viagem-header img { object-fit: contain; }
+      .painel-viagem-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: #2c3e50; }
+      .viagem-status-badge { display: none; padding: 4px 10px; font-size: 12px; font-weight: 700; border-radius: 12px; }
+      .badge-embarque { background-color: #d1e7dd; color: #0f5132; animation: pulse 1.5s infinite; }
+      .badge-desembarque { background-color: #f8d7da; color: #842029; animation: pulse 1.5s infinite; }
+      .badge-aguardando { background-color: #fff3cd; color: #664d03; animation: pulse 1.5s infinite;}
+      .badge-em-viagem { background-color: #cfe2ff; color: #0a3678; }
+      .painel-viagem-grid { display: none; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+      .painel-viagem-ponto { font-size: 14px; color: #495057; margin-bottom: 12px; }
+      .painel-viagem-ponto:last-child { margin-bottom: 0; }
+      .painel-viagem-ponto strong { color: #34495e; font-weight: 600; display: block; margin-bottom: 2px; }
+      .painel-viagem-ponto span { font-size: 14px; color: #6c757d; }
+      .painel-viagem-placeholder { text-align: center; padding: 20px; color: #6c757d; font-style: italic; }
+      .viagem-finalizada-texto { font-size: 20px; font-weight: 700; color: #dc3545; text-align: center; }
+      .viagem-finalizada-agradecimento {
+        font-size: 14px;
+        color: #6c757d;
+        margin-top: 8px;
+        text-align: center;
+      }
+      #seletorPersonagem {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        margin-top: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        padding: 10px;
+      }
+      #seletorPersonagem h5 {
+        margin: 0 0 8px 0;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+      }
+      .personagem-grid {
+        display: flex;
+        justify-content: space-around;
+        gap: 10px;
+      }
+      .personagem-item {
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+      }
+      .personagem-item img {
+        width: 40px;
+        height: 60px;
+        object-fit: contain;
+        display: block;
+      }
+      .personagem-item.selected {
+        border-color: #0d6efd;
+        background-color: #cfe2ff;
+      }
+      @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+      #logo-container {
+        margin-top: auto;
+        padding-top: 20px;
+        text-align: center;
+      }
+      #logo-container img {
+        max-width: 250px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <div class="sidebar" id="sidebar">
+      <div id="statusContainer"></div>
+      
+      <div id="seletorPersonagem">
+          <h5>Selecione o personagem</h5>
+          <div class="personagem-grid"></div>
+      </div>
+
+      <div id="painelViagem">
+        <div class="painel-viagem-header" style="display: none;">
+            <div class="painel-viagem-header-info">
+                <img id="painelViagemIcone" src="" alt="Ícone da Linha">
+                <h3 id="painelViagemTitulo">Viagem Atual</h3>
+            </div>
+            <span id="painelViagemStatusBadge" class="viagem-status-badge"></span>
+        </div>
+        <div class="painel-viagem-body">
+            <div class="painel-viagem-placeholder">
+                A carregar dados da simulação...
+            </div>
+            <div class="painel-viagem-grid">
+              <div class="viagem-coluna">
+                <div class="painel-viagem-ponto" data-field="origem" style="display: none;">
+                    <strong>Origem:</strong>
+                    <span id="painelViagemOrigem">--</span>
+                </div>
+                <div class="painel-viagem-ponto" data-field="destino" style="display: none;">
+                    <strong>Destino:</strong>
+                    <span id="painelViagemDestino">--</span>
+                </div>
+              </div>
+              <div class="viagem-coluna">
+                <div class="painel-viagem-ponto" data-field="distancia" style="display: none;">
+                    <strong>Próximo Ponto:</strong>
+                    <span id="painelViagemDistancia">--</span>
+                </div>
+                <!-- REMOVIDO: Bloco de Lotação -->
+                <div class="painel-viagem-ponto" data-field="eta" style="display: none;">
+                    <strong>Tempo Estimado:</strong>
+                    <span id="painelViagemEta">--</span>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div id="viagemProgressoContainer">
+            <div id="viagemProgressoBarra"></div>
+        </div>
+      </div>
+      
+      <div id="horarioPopup" class="horario-popup" style="display: none;">
+          <button id="horarioPopupClose" class="horario-popup-close">&times;</button>
+          <div class="horario-popup-header">
+              <div>
+                <h4 id="horarioPopupTitle"></h4>
+                <small>Horários</small>
+              </div>
+          </div>
+          <div class="horario-popup-content">
+            <div class="times"></div>
+          </div>
+      </div>
+      
+      <div id="logo-container">
+        <img src="https://i.postimg.cc/q7bxy1g4/LOGO-FINAL.png" alt="Logo SmartWay">
+      </div>
+
+    </div>
+
+    <div class="controls">
+      <div class="clock" id="clock">05:30</div>
+      <div class="timeline-container" id="timelineContainer">
+        <div class="timeline-bar" id="timelineBar"></div>
+        <div class="timeline-handle" id="timelineHandle"></div>
+      </div>
+      <div class="buttons-grid">
+        <button id="btnStart">Iniciar</button>
+        <button id="btnStop" disabled>Pausar</button>
+      </div>
+      <div>
+        <label for="toggleParadas" class="custom-checkbox-container">
+          <input type="checkbox" id="toggleParadas" checked />
+          Mostrar Paradas
+        </label>
+      </div>
+      <div class="slider-container">
+        <small>Velocidade</small>
+        <input
+          type="range"
+          min="0.5"
+          max="5"
+          step="0.1"
+          value="2"
+          id="speedSlider"
+          class="slider"
+        />
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      let mapa;
+      const SERVER_IP = "10.87.62.202"; // !!! Altere para o IP do seu servidor
+      const SERVER_PORT = 5000;
+      const SERVER_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+      
+      let rotas = {};
+      let NOMES_DAS_PARADAS = {};
+      let APELIDOS_DAS_PARADAS = {};
+      let REFERENCIAS_PRINCIPAIS = {};
+      let iconData = {};
+      let iconesLeaflet = {};
+
+      const configSimulacao = {
+        BASE_SPEED_KMPH: 12,
+        MS_REAIS_POR_MINUTO_SIM: 1500,
+        DURACAO_PARADA_MINUTOS: 1,
+        DURACAO_PARADA_ESPECIAL_MS: 5000,
+        MIN_HORA_SIMULACAO: 5.5 * 60,
+        MAX_HORA_SIMULACAO: 23 * 60,
+      };
+
+      let tempoSimulacaoEmMinutos = configSimulacao.MIN_HORA_SIMULACAO;
+      let estaPausado = true;
+      let estaRodando = false;
+      let escalaDeTempo = 2;
+      let ultimoTimestamp = 0;
+      let onibusAtivos = [];
+      let proximoIdOnibus = 0;
+      let rotaDestacada = null;
+      let viagemAtualNoSimulador = { estado: 'IDLE' };
+      
+      // ADICIONADO: Variável para controlar o "congelamento" da barra de progresso
+      let progressBarFreezeUntil = 0;
+      
+      let onibusEmFoco = null;
+      let trajetoEspecificoPolyline = null;
+      let focusModeElements = L.layerGroup();
+      
+      let iconePersonagemSelecionado = null; 
+      let marcadorUsuarioNaParada = null;
+      let marcadorOrigemFixo = null;
+      let idPersonagemSelecionado = 0;
+
+      let popupAbertoAtualmente = null;
+      let ultimoUpdatePopup = 0;
+      let cacheLinhasPorParada = {};
+      
+      let suppressServerUpdatesUntil = 0;
+      let finalizationTimeout;
+      
+      const camadas = {};
+
+      // Lê os três JSONs locais usados também pelo servidor para rotas e paradas.
+      async function carregarDados() {
+        try {
+          const [rotasResponse, paradasResponse, iconesResponse] = await Promise.all([
+            fetch('./rotas_data.json'),
+            fetch('./paradas_data.json'),
+            fetch('./icones_data.json')
+          ]);
+
+          if (!rotasResponse.ok || !paradasResponse.ok || !iconesResponse.ok) {
+            throw new Error('Falha ao carregar um ou mais ficheiros JSON.');
+          }
+
+          rotas = await rotasResponse.json();
+          const paradasData = await paradasResponse.json();
+          NOMES_DAS_PARADAS = paradasData.NOMES_DAS_PARADAS;
+          APELIDOS_DAS_PARADAS = paradasData.APELIDOS_DAS_PARADAS;
+          REFERENCIAS_PRINCIPAIS = paradasData.REFERENCIAS_PRINCIPAIS || {};
+          iconData = await iconesResponse.json();
+          
+          console.log("Todos os dados de simulação foram carregados com sucesso!");
+        } catch (error)
+        {
+          console.error("Erro fatal ao carregar os dados JSON:", error);
+          alert("Não foi possível carregar os dados de simulação. Verifique se os ficheiros JSON estão na mesma pasta e se o servidor local está a funcionar.");
+          document.querySelector('.painel-viagem-placeholder').textContent = 'Erro ao carregar dados.';
+        }
+      }
+
+      function criarIconeLeaflet(config) {
+        const defaultConfig = { size: [30, 30], anchor: [15, 15], popup: [0, -15] };
+        const finalConfig = { ...defaultConfig, ...config };
+
+        return L.icon({
+            iconUrl: finalConfig.url,
+            iconSize: finalConfig.size,
+            iconAnchor: finalConfig.anchor,
+            popupAnchor: finalConfig.popup,
+            zIndexOffset: finalConfig.zIndex || 0
+        });
+      }
+
+      function prepararIcones() {
+          iconesLeaflet.paradaInicio = {};
+          for (const cor in iconData.paradaInicio) {
+              iconesLeaflet.paradaInicio[cor] = criarIconeLeaflet(iconData.paradaInicio[cor]);
+          }
+
+          iconesLeaflet.paradaColorido = {};
+          for (const cor in iconData.paradaColorido) {
+              iconesLeaflet.paradaColorido[cor] = criarIconeLeaflet(iconData.paradaColorido[cor]);
+          }
+          iconesLeaflet.paradaPadrao = criarIconeLeaflet(iconData.paradaPadrao);
+          iconesLeaflet.paradaDimmed = criarIconeLeaflet(iconData.paradaDimmed);
+          
+          iconesLeaflet.personagens = (iconData.personagens || []).map(p => criarIconeLeaflet(p));
+          if (iconesLeaflet.personagens.length > 0) {
+              iconePersonagemSelecionado = iconesLeaflet.personagens[0];
+          } else {
+              console.error("AVISO: A lista 'personagens' não foi encontrada em icones_data.json. O ícone do usuário pode não aparecer.");
+              iconePersonagemSelecionado = iconesLeaflet.paradaPadrao; 
+          }
+          
+          iconesLeaflet.destino = {};
+          for (const cor in iconData.destino) {
+              iconesLeaflet.destino[cor] = criarIconeLeaflet(iconData.destino[cor]);
+          }
+
+          iconesLeaflet.definindoRota = criarIconeLeaflet(iconData.definindoRota);
+          iconesLeaflet.erroRota = criarIconeLeaflet(iconData.erroRota);
+          
+          const configIconeOnibusNormal = {...(iconData.onibusConfig.normal || {}), size: [46, 29], anchor: [23, 14.5]};
+          const configIconeOnibusEmViagem = {...(iconData.onibusConfig.emViagem || {}), size: [52, 33], anchor: [26, 16.5]};
+          const configIconeOnibusDestacado = {...(iconData.onibusConfig.destacado || {}), size: [46, 29], anchor: [23, 14.5]};
+          const configIconeOnibusDimmed = {...(iconData.onibusConfig.dimmed || {}), size: [46, 29], anchor: [23, 14.5]};
+          
+          iconesLeaflet.onibusNormal = {};
+          iconesLeaflet.onibusEmViagem = {};
+          iconesLeaflet.onibusDestacado = {};
+          iconesLeaflet.onibusDimmed = {};
+
+          for (const cor in iconData.onibusUrls) {
+              iconesLeaflet.onibusNormal[cor] = criarIconeLeaflet({url: iconData.onibusUrls[cor], ...configIconeOnibusNormal});
+              iconesLeaflet.onibusEmViagem[cor] = criarIconeLeaflet({url: iconData.onibusUrls[cor], ...configIconeOnibusEmViagem});
+              iconesLeaflet.onibusDestacado[cor] = criarIconeLeaflet({url: iconData.onibusUrls[cor], ...configIconeOnibusDestacado});
+              iconesLeaflet.onibusDimmed[cor] = criarIconeLeaflet({url: iconData.onibusUrls[cor], ...configIconeOnibusDimmed});
+          }
+          
+          popularGridDePersonagens();
+      }
+      
+      function popularGridDePersonagens() {
+          const grid = document.querySelector('.personagem-grid');
+          if (!grid || !iconData.personagens || iconData.personagens.length === 0) return;
+          
+          grid.innerHTML = '';
+
+          iconData.personagens.forEach((personagem, index) => {
+              const item = document.createElement('div');
+              item.className = 'personagem-item';
+              item.dataset.personagemId = index;
+              
+              const img = document.createElement('img');
+              img.src = personagem.url;
+              img.alt = `Personagem ${index + 1}`;
+              
+              item.appendChild(img);
+              grid.appendChild(item);
+              
+              if (index === 0) {
+                  item.classList.add('selected');
+              }
+          });
+      }
+      
+      // Cria os controles das linhas, trajetos e marcadores no mapa Leaflet.
+      function configurarInterface() {
+        const statusContainer = document.getElementById("statusContainer");
+        statusContainer.innerHTML = "";
+        preCalcularLinhasPorParada();
+        preCalcularDistancias();
+
+        for (const [cor, rota] of Object.entries(rotas)) {
+          camadas[cor] = {
+            routeLayer: L.layerGroup(),
+            busLayer: L.layerGroup(),
+            paradaMarkersById: {}
+          };
+          rota.horariosEmMinutos = rota.horariosPartida.map(horarioStringParaMinutos);
+          rota.proximoIndiceHorario = 0;
+          
+          const divLinha = document.createElement("div");
+          divLinha.className = `linha-onibus ${cor}`;
+          divLinha.id = `linha-onibus-${cor}`;
+          divLinha.innerHTML = `
+            <div class="linha-header">
+                <div class="linha-info">
+                    <img src="${iconData.onibusUrls[cor]}" class="icone" alt="Ícone de Ônibus ${cor}">
+                    <div class="linha-titulo-container">
+                        <h4>${rota.titulo}</h4>
+                        <p class="subtitulo">${rota.subtitulo}</p>
+                    </div>
+                </div>
+                <label for="toggle_${cor}" class="visibility-toggle-container">
+                    <input type="checkbox" id="toggle_${cor}" class="visibility-toggle" data-cor="${cor}" checked />
+                </label>
+            </div>
+            <div class="status-box" id="status_box_${cor}"></div>
+            <div class="linha-actions">
+                <button class="highlight-button" data-cor="${cor}">Destacar</button>
+                <button class="horario-button" data-cor="${cor}">Horários</button>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar ${cor}" id="progress_${cor}"></div>
+            </div>
+          `;
+          statusContainer.appendChild(divLinha);
+          
+          const polyline = L.polyline(rota.coords, { color: rota.cor, weight: 3, opacity: 1 });
+          polyline.on("mouseover", () => { if (rotaDestacada !== cor) polyline.setStyle({ weight: 5 }); });
+          polyline.on("mouseout", () => { if (rotaDestacada !== cor) polyline.setStyle({ weight: 3 }); });
+          camadas[cor].routeLayer.addLayer(polyline);
+
+          rota.paradasIndices.forEach((coordIndex) => {
+            const marker = L.marker(rota.coords[coordIndex], { icon: getIconeParada(cor, false, coordIndex) });
+            const nomeParada = NOMES_DAS_PARADAS[cor][coordIndex];
+            marker.paradaInfo = { nome: nomeParada, cor: cor, id: coordIndex, latlng: rota.coords[coordIndex] };
+            
+            marker.bindPopup(() => getConteudoPopupParada(marker.paradaInfo), { className: 'parada-popup' });
+            
+            camadas[cor].routeLayer.addLayer(marker);
+            camadas[cor].paradaMarkersById[coordIndex] = marker;
+          });
+        }
+        setupTimeline();
+      }
+      
+      function getConteudoPopupParada(paradaInfo) {
+          const match = paradaInfo.nome.match(/([^(]+)\s*(\(.*\))?/);
+          const titulo = match[1].trim();
+          const subtitulo = match[2] || '';
+
+          const METERS_PER_MINUTE = (configSimulacao.BASE_SPEED_KMPH * 1000) / 60;
+          
+          const onibusMaisProximosPorLinha = {};
+
+          onibusAtivos.forEach(onibus => {
+              const rotaOnibus = rotas[onibus.cor];
+              
+              const idParadaNaRotaDoOnibus = Object.keys(NOMES_DAS_PARADAS[onibus.cor])
+                                                 .find(key => NOMES_DAS_PARADAS[onibus.cor][key] === paradaInfo.nome);
+
+              if (idParadaNaRotaDoOnibus && onibus.indiceCoordAtual <= idParadaNaRotaDoOnibus) {
+                  const distAcumuladaOnibus = onibus.distanciaPercorrida;
+                  const distAcumuladaParada = rotaOnibus.distanciasAcumuladas[idParadaNaRotaDoOnibus];
+                  const distanciaRestante = distAcumuladaParada - distAcumuladaOnibus;
+                  
+                  if (distanciaRestante > 0) {
+                      if (!onibusMaisProximosPorLinha[onibus.cor] || distanciaRestante < onibusMaisProximosPorLinha[onibus.cor].distancia) {
+                          onibusMaisProximosPorLinha[onibus.cor] = {
+                              eta: Math.ceil(distanciaRestante / METERS_PER_MINUTE),
+                              distancia: distanciaRestante,
+                              cor: onibus.cor
+                          };
+                      }
+                  }
+              }
+          });
+          
+          const onibusChegando = Object.values(onibusMaisProximosPorLinha);
+          
+          let onibusProximosHtml = '';
+          if (onibusChegando.length > 0) {
+              onibusProximosHtml = onibusChegando
+                  .sort((a, b) => a.eta - b.eta)
+                  .map(o => `<div class="onibus-proximo-item"><img src="${iconData.onibusUrls[o.cor]}" alt="Ícone"><div class="onibus-proximo-info"><span>Chegando em ~${o.eta} min</span><small>(${Math.round(o.distancia)} m)</small></div></div>`).join('');
+          } else {
+              onibusProximosHtml = '<div class="parada-popup-dinamico-vazio">Nenhum ônibus se aproximando.</div>';
+          }
+
+          let referenciasHtml = '';
+          const listaReferencias = REFERENCIAS_PRINCIPAIS[paradaInfo.nome];
+          if (listaReferencias && listaReferencias.length > 0) {
+              const itensLista = listaReferencias.map(ref => `<li>${ref}</li>`).join('');
+              referenciasHtml = `
+                <div class="parada-popup-referencias">
+                    <strong>Pontos de Referência:</strong>
+                    <ul>${itensLista}</ul>
+                </div>
+              `;
+          }
+
+          return `
+              <div class="parada-popup-header">
+                  <h4>${titulo}</h4>
+                  ${subtitulo ? `<small>${subtitulo.slice(1, -1)}</small>` : ''}
+              </div>
+              <div class="parada-popup-body">
+                  ${onibusProximosHtml}
+                  ${referenciasHtml}
+              </div>
+          `;
+      }
+
+      const horarioStringParaMinutos = (horarioStr) => {
+        const [horas, minutos] = horarioStr.replace("h", ":").split(":").map(Number);
+        return horas * 60 + (minutos || 0);
+      };
+
+      const formatarMinutosParaHorario = (minutos) => {
+        const h = Math.floor(minutos / 60).toString().padStart(2, "0");
+        const m = Math.floor(minutos % 60).toString().padStart(2, "0");
+        return `${h}:${m}`;
+      };
+
+      // Calcula distâncias acumuladas para posicionar ônibus ao longo de cada rota.
+      const preCalcularDistancias = () => {
+          for (const cor in rotas) {
+              const rota = rotas[cor];
+              rota.distanciasAcumuladas = [0];
+              let distanciaTotal = 0;
+              for (let i = 1; i < rota.coords.length; i++) {
+                  const de = L.latLng(rota.coords[i - 1]);
+                  const para = L.latLng(rota.coords[i]);
+                  distanciaTotal += de.distanceTo(para);
+                  rota.distanciasAcumuladas.push(distanciaTotal);
+              }
+              rota.distanciaTotalDaRota = distanciaTotal;
+          }
+      };
+
+      const getIconeOnibus = (cor, isThisRouteHighlighted, emViagem = false) => {
+          const isDimmed = rotaDestacada && !isThisRouteHighlighted;
+          if (isDimmed) return iconesLeaflet.onibusDimmed[cor];
+          if (emViagem) return iconesLeaflet.onibusEmViagem[cor];
+          return isThisRouteHighlighted ? iconesLeaflet.onibusDestacado[cor] : iconesLeaflet.onibusNormal[cor];
+      };
+      
+      const getIconeParada = (cor, isThisRouteHighlighted, paradaId) => {
+        const isDimmed = rotaDestacada && !isThisRouteHighlighted;
+        if (isDimmed) return iconesLeaflet.paradaDimmed;
+
+        const inicioIndex = rotas[cor].paradasIndices[0];
+        if (isThisRouteHighlighted && paradaId === inicioIndex) {
+            return iconesLeaflet.paradaInicio[cor];
+        }
+
+        if (isThisRouteHighlighted) return iconesLeaflet.paradaColorido[cor];
+        
+        return iconesLeaflet.paradaPadrao;
+      };
+
+      const preCalcularLinhasPorParada = () => {
+        const todasAsParadas = {};
+        for (const [cor, rota] of Object.entries(rotas)) {
+          for (const index of rota.paradasIndices) {
+            const nomeParada = NOMES_DAS_PARADAS[cor][index];
+            if (!todasAsParadas[nomeParada]) {
+              todasAsParadas[nomeParada] = new Set();
+            }
+            todasAsParadas[nomeParada].add(cor);
+          }
+        }
+        for (const nomeParada in todasAsParadas) {
+          cacheLinhasPorParada[nomeParada] = Array.from(todasAsParadas[nomeParada]);
+        }
+      };
+      
+      // Avança o relógio simulado e atualiza posições a cada quadro de animação.
+      const loopPrincipal = (timestamp) => {
+        if (!estaRodando) return;
+        if (estaPausado) {
+          ultimoTimestamp = timestamp;
+          requestAnimationFrame(loopPrincipal);
+          return;
+        }
+        if (!ultimoTimestamp) ultimoTimestamp = timestamp;
+        let deltaTempo = (timestamp - ultimoTimestamp) / 1000;
+        ultimoTimestamp = timestamp;
+        if (deltaTempo > 0.1) deltaTempo = 1 / 60;
+        
+        atualizarVelocidade();
+
+        const minutosParaAdicionar = (deltaTempo * 1000 * 1.0) / configSimulacao.MS_REAIS_POR_MINUTO_SIM;
+        tempoSimulacaoEmMinutos += minutosParaAdicionar;
+
+        if (tempoSimulacaoEmMinutos >= configSimulacao.MAX_HORA_SIMULACAO) {
+          reiniciarEstadoDiario(configSimulacao.MIN_HORA_SIMULACAO);
+        }
+        atualizarMostradorRelogio();
+        atualizarLinhaTempo();
+        atualizarOnibus(minutosParaAdicionar, escalaDeTempo); 
+        requestAnimationFrame(loopPrincipal);
+      };
+
+      function despacharNovoOnibus(cor, horario, isHistoric = false) {
+        const rota = rotas[cor];
+        const idOnibus = proximoIdOnibus++;
+        const marcador = L.marker(rota.coords[0], { icon: getIconeOnibus(cor, cor === rotaDestacada) });
+        
+        const novoOnibus = {
+          id: idOnibus, cor, marcador, horarioPartida: horario, indiceCoordAtual: 0, status: "movendo",
+          distanciaPercorrida: 0,
+          ultimoIndiceParada: -1 
+        };
+
+        marcador.addTo(camadas[cor].busLayer);
+        
+        if (!isHistoric) {
+          const el = marcador.getElement();
+          if(el) { el.classList.add('marker-fade-in'); }
+
+          const cardLinha = document.getElementById(`linha-onibus-${cor}`);
+          if(cardLinha) {
+              cardLinha.classList.add('flash-green');
+              setTimeout(() => cardLinha.classList.remove('flash-green'), 1000);
+          }
+        }
+        
+        onibusAtivos.push(novoOnibus);
+        return novoOnibus;
+      };
+      
+      const atualizarMostradorRelogio = () => { document.getElementById("clock").textContent = formatarMinutosParaHorario(tempoSimulacaoEmMinutos); };
+      
+      const atualizarOnibus = (minutosSimDecorridos, speedMultiplier) => {
+          despacharNovosOnibus();
+
+          const METERS_PER_MINUTE = (configSimulacao.BASE_SPEED_KMPH * 1000) / 60;
+          const distanciaFrame = METERS_PER_MINUTE * speedMultiplier * minutosSimDecorridos;
+
+          const onibusParaRemover = new Set();
+          onibusAtivos.forEach((onibus) => {
+              // Lógica de parada
+              if (onibus.status === "parado") {
+                  if (!onibus.partidaDaParadaTimestamp) {
+                      let tempoParadaMs = configSimulacao.DURACAO_PARADA_MINUTOS * configSimulacao.MS_REAIS_POR_MINUTO_SIM / escalaDeTempo;
+                      onibus.partidaDaParadaTimestamp = performance.now() + tempoParadaMs;
+                  }
+
+                  if (performance.now() >= onibus.partidaDaParadaTimestamp) {
+                      onibus.status = "movendo";
+                      onibus.ultimoIndiceParada = onibus.indiceCoordAtual; // Armazena a parada que acabou de sair
+                      onibus.partidaDaParadaTimestamp = null; 
+                  }
+                  return; 
+              }
+
+              // Lógica de movimento
+              if (onibus.status === "movendo") {
+                  onibus.distanciaPercorrida += distanciaFrame;
+                  const rota = rotas[onibus.cor];
+
+                  // Chegou ao fim da rota
+                  if (onibus.distanciaPercorrida >= rota.distanciaTotalDaRota) {
+                      onibus.status = "finalizado";
+                      if (onibus.marcador) camadas[onibus.cor].busLayer.removeLayer(onibus.marcador);
+                      onibusParaRemover.add(onibus.id);
+                      return;
+                  }
+                  
+                  // Encontra a nova posição no mapa
+                  const novoPos = getLatLngPorDistancia(rota, onibus.distanciaPercorrida);
+                  onibus.indiceCoordAtual = novoPos.indice;
+                  onibus.marcador.setLatLng(novoPos.latlng);
+
+                  // Verifica se chegou em uma parada (e se não é a mesma que acabou de sair)
+                  if (rota.paradasIndices.includes(onibus.indiceCoordAtual) && onibus.indiceCoordAtual !== onibus.ultimoIndiceParada) {
+                      const distAcumuladaParada = rota.distanciasAcumuladas[onibus.indiceCoordAtual];
+                      if(Math.abs(onibus.distanciaPercorrida - distAcumuladaParada) < distanciaFrame * 1.5) { // Tolerância
+                          onibus.status = "parado";
+                          
+                          let tempoParadaMs = configSimulacao.DURACAO_PARADA_MINUTOS * configSimulacao.MS_REAIS_POR_MINUTO_SIM / escalaDeTempo;
+
+                          // Lógica da viagem do usuário
+                          if (viagemAtualNoSimulador.onibus_id === onibus.id &&
+                             (viagemAtualNoSimulador.id_origem === onibus.indiceCoordAtual || viagemAtualNoSimulador.id_destino === onibus.indiceCoordAtual)) {
+                              tempoParadaMs = configSimulacao.DURACAO_PARADA_ESPECIAL_MS;
+                          }
+                          
+                          onibus.partidaDaParadaTimestamp = performance.now() + tempoParadaMs;
+
+                          // Garante que o ônibus fique exatamente na coordenada da parada
+                          onibus.marcador.setLatLng(rota.coords[onibus.indiceCoordAtual]);
+                          onibus.distanciaPercorrida = distAcumuladaParada;
+                      }
+                  }
+              }
+          });
+
+          // Limpa ônibus que finalizaram
+          if (onibusParaRemover.size > 0) {
+              onibusAtivos = onibusAtivos.filter((b) => !onibusParaRemover.has(b.id));
+          }
+          
+          // Move o ícone do personagem junto com o ônibus
+          if (viagemAtualNoSimulador.estado === 'EM_VIAGEM' && marcadorUsuarioNaParada) {
+            const onibusDaViagem = onibusAtivos.find(o => o.id === viagemAtualNoSimulador.onibus_id);
+            if (onibusDaViagem) {
+                marcadorUsuarioNaParada.setLatLng(onibusDaViagem.marcador.getLatLng());
+            }
+          }
+          
+          atualizarTextoStatus();
+          atualizarBarrasDeProgresso();
+
+          // Atualiza o popup dinâmico se estiver aberto
+          if (popupAbertoAtualmente && performance.now() - ultimoUpdatePopup > 200) {
+              const novoConteudo = getConteudoPopupParada(popupAbertoAtualmente.paradaInfo);
+              popupAbertoAtualmente.popup.setContent(novoConteudo);
+              ultimoUpdatePopup = performance.now();
+          }
+      };
+      
+      function atualizarBarrasDeProgresso() {
+        for (const cor in rotas) {
+            const onibusDaLinha = onibusAtivos.filter(b => b.cor === cor);
+            const progressBar = document.getElementById(`progress_${cor}`);
+            if (!progressBar) continue;
+
+            if (onibusDaLinha.length > 0) {
+                const onibusMaisAvancado = onibusDaLinha.reduce((prev, current) => {
+                    return (prev.distanciaPercorrida > current.distanciaPercorrida) ? prev : current;
+                });
+                
+                const rota = rotas[cor];
+                const progresso = (onibusMaisAvancado.distanciaPercorrida / rota.distanciaTotalDaRota) * 100;
+                progressBar.style.width = `${Math.min(100, progresso)}%`;
+            } else {
+                progressBar.style.width = '0%';
+            }
+        }
+      }
+
+      // Coloca ônibus em circulação quando o horário simulado alcança a partida.
+      const despacharNovosOnibus = () => {
+        for (const [cor, rota] of Object.entries(rotas)) {
+          if (rota.proximoIndiceHorario >= rota.horariosEmMinutos.length) {
+            continue;
+          }
+          let proximoHorario = rota.horariosEmMinutos[rota.proximoIndiceHorario];
+          while (tempoSimulacaoEmMinutos >= proximoHorario) {
+            despacharNovoOnibus(cor, proximoHorario);
+            rota.proximoIndiceHorario++;
+            if (rota.proximoIndiceHorario >= rota.horariosEmMinutos.length) {
+              break;
+            }
+            proximoHorario = rota.horariosEmMinutos[rota.proximoIndiceHorario];
+          }
+        }
+      };
+      
+      const atualizarTextoStatus = () => {
+        for (const cor in rotas) {
+            const onibusDaCor = onibusAtivos.some((b) => b.cor === cor);
+            const statusBox = document.getElementById(`status_box_${cor}`);
+            if (onibusDaCor) {
+                statusBox.textContent = 'Em rota';
+                statusBox.className = 'status-box em-rota';
+            } else {
+                statusBox.textContent = 'Fora de rota';
+                statusBox.className = 'status-box fora-de-rota';
+            }
+        }
+      };
+
+      const iniciarSimulacao = () => {
+        if (estaRodando) return;
+        estaRodando = true;
+        estaPausado = false;
+        requestAnimationFrame(loopPrincipal);
+        document.getElementById("btnStart").disabled = true;
+        document.getElementById("btnStop").disabled = false;
+        document.getElementById("btnStop").textContent = "Pausar";
+      };
+
+      const alternarPausa = () => {
+        estaPausado = !estaPausado;
+        document.getElementById("btnStop").textContent = estaPausado ? "Continuar" : "Pausar";
+        if (!estaPausado) ultimoTimestamp = performance.now();
+      };
+
+      const definirHorario = (novoHorario) => {
+        reiniciarEstadoDiario(novoHorario);
+        if (estaRodando && !estaPausado) {
+          estaPausado = true;
+          document.getElementById("btnStop").textContent = "Continuar";
+        }
+      };
+
+      function getLatLngPorDistancia(rota, distancia) {
+          if (distancia >= rota.distanciaTotalDaRota) {
+              const ultimoPonto = rota.coords[rota.coords.length - 1];
+              return { latlng: L.latLng(ultimoPonto), indice: rota.coords.length - 1 };
+          }
+          
+          let indiceSegmento = 0;
+          while (indiceSegmento < rota.distanciasAcumuladas.length - 1 && distancia >= rota.distanciasAcumuladas[indiceSegmento + 1]) {
+              indiceSegmento++;
+          }
+          
+          const pontoInicial = rota.coords[indiceSegmento];
+          const pontoFinal = rota.coords[indiceSegmento + 1];
+          const distAcumuladaSegmento = rota.distanciasAcumuladas[indiceSegmento];
+          const distTotalSegmento = rota.distanciasAcumuladas[indiceSegmento + 1] - distAcumuladaSegmento;
+          
+          let progresso = 0;
+          if (distTotalSegmento > 0) {
+              progresso = (distancia - distAcumuladaSegmento) / distTotalSegmento;
+          }
+          
+          const lat = pontoInicial[0] + (pontoFinal[0] - pontoInicial[0]) * progresso;
+          const lng = pontoInicial[1] + (pontoFinal[1] - pontoInicial[1]) * progresso;
+          
+          return { latlng: L.latLng(lat, lng), indice: indiceSegmento };
+      }
+
+      function calcularPosicaoOnibusNoTempo(rota, tempoDesdePartidaEmMinutos) {
+          const METERS_PER_MINUTE = (configSimulacao.BASE_SPEED_KMPH * 1000) / 60;
+          let tempoRestante = tempoDesdePartidaEmMinutos;
+          let distanciaPercorrida = 0;
+          let indiceCoordAtual = 0;
+          let ultimoIndiceParada = -1;
+          
+          while(tempoRestante > 0) {
+              const proximaParadaIndex = rota.paradasIndices.find(idx => idx > indiceCoordAtual);
+              const proximoPontoFinalIndex = proximaParadaIndex !== undefined ? proximaParadaIndex : rota.coords.length - 1;
+
+              if (proximoPontoFinalIndex <= indiceCoordAtual) {
+                  distanciaPercorrida = rota.distanciaTotalDaRota;
+                  break; 
+              }
+
+              const distAteProximoPonto = rota.distanciasAcumuladas[proximoPontoFinalIndex] - rota.distanciasAcumuladas[indiceCoordAtual];
+              const tempoParaProximoPonto = distAteProximoPonto / METERS_PER_MINUTE;
+
+              if (tempoRestante >= tempoParaProximoPonto) {
+                  tempoRestante -= tempoParaProximoPonto;
+                  distanciaPercorrida = rota.distanciasAcumuladas[proximoPontoFinalIndex];
+                  indiceCoordAtual = proximoPontoFinalIndex;
+                  ultimoIndiceParada = indiceCoordAtual;
+                  
+                  if (proximaParadaIndex !== undefined && indiceCoordAtual !== rota.coords.length - 1) {
+                      tempoRestante -= configSimulacao.DURACAO_PARADA_MINUTOS;
+                  }
+              } else {
+                  distanciaPercorrida += tempoRestante * METERS_PER_MINUTE;
+                  tempoRestante = 0;
+              }
+          }
+          
+          return { distanciaPercorrida, indiceCoordAtual, ultimoIndiceParada };
+      }
+
+      // Reconstrói os ônibus ao mover manualmente a linha do tempo.
+      const reiniciarEstadoDiario = (novoHorario) => {
+        tempoSimulacaoEmMinutos = novoHorario;
+        onibusAtivos.forEach((onibus) => {
+          if (onibus.marcador) camadas[onibus.cor].busLayer.removeLayer(onibus.marcador);
+        });
+        onibusAtivos = [];
+        
+        for (const cor in rotas) {
+          rotas[cor].proximoIndiceHorario = 0;
+          for(const horario of rotas[cor].horariosEmMinutos) {
+              if (horario < novoHorario) {
+                  const tempoDesdePartida = novoHorario - horario;
+                  const estadoCalculado = calcularPosicaoOnibusNoTempo(rotas[cor], tempoDesdePartida);
+                  
+                  if(estadoCalculado.distanciaPercorrida < rotas[cor].distanciaTotalDaRota) {
+                      const onibus = despacharNovoOnibus(cor, horario, true);
+                      onibus.distanciaPercorrida = estadoCalculado.distanciaPercorrida;
+                      onibus.indiceCoordAtual = estadoCalculado.indiceCoordAtual;
+                      onibus.ultimoIndiceParada = estadoCalculado.ultimoIndiceParada; // Garante que a memória seja definida
+
+                      // Verifica se o ônibus foi criado em uma parada e define o status correto
+                      if(rotas[cor].paradasIndices.includes(onibus.indiceCoordAtual) && tempoDesdePartida > 0) {
+                          onibus.status = "parado";
+                      }
+
+                      const pos = getLatLngPorDistancia(rotas[cor], estadoCalculado.distanciaPercorrida);
+                      onibus.marcador.setLatLng(pos.latlng);
+                  }
+                  rotas[cor].proximoIndiceHorario++;
+              } else {
+                  break; 
+              }
+          }
+        }
+        
+        atualizarTextoStatus();
+        atualizarMostradorRelogio();
+        atualizarLinhaTempo();
+      };
+      
+      function aplicarDestaque(corParaDestacar) {
+          rotaDestacada = corParaDestacar;
+          atualizarVisibilidadeMapa();
+          
+          const polyline = camadas[corParaDestacar].routeLayer.getLayers().find(l => l instanceof L.Polyline);
+          if (polyline) {
+            mapa.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+          }
+      }
+
+      function removerDestaque() {
+          rotaDestacada = null;
+          atualizarVisibilidadeMapa();
+      }
+      
+      function atualizarVelocidade() {
+        const speedSlider = document.getElementById("speedSlider");
+        const isViagemAtiva = ["MONITORANDO", "AGUARDANDO_EMBARQUE", "EM_VIAGEM"].includes(viagemAtualNoSimulador.estado);
+
+        if (isViagemAtiva) {
+            speedSlider.disabled = true;
+            const eta = viagemAtualNoSimulador.eta_minutos;
+            
+            const MAX_SPEED_VIAGEM = 2.0; 
+            const MIN_SPEED_VIAGEM = 0.8;
+            const ETA_DESACELERACAO_INICIO = 7;
+            const ETA_DESACELERACAO_FIM = 2;
+
+            if (eta === undefined || eta < 0) {
+                escalaDeTempo = MIN_SPEED_VIAGEM;
+            } else if (eta > ETA_DESACELERACAO_INICIO) {
+                escalaDeTempo = MAX_SPEED_VIAGEM;
+            } else if (eta <= ETA_DESACELERACAO_FIM) {
+                escalaDeTempo = MIN_SPEED_VIAGEM;
+            } else {
+                const progresso = (ETA_DESACELERACAO_INICIO - eta) / (ETA_DESACELERACAO_INICIO - ETA_DESACELERACAO_FIM);
+                escalaDeTempo = MAX_SPEED_VIAGEM - (MAX_SPEED_VIAGEM - MIN_SPEED_VIAGEM) * progresso;
+            }
+        } else {
+            speedSlider.disabled = false;
+            escalaDeTempo = parseFloat(speedSlider.value);
+        }
+    }
+      
+      function atualizarVisibilidadeMapa() {
+          const mostrarParadasGeral = document.getElementById("toggleParadas")?.checked || false;
+
+          for (const cor in rotas) {
+              const linhaDiv = document.getElementById(`linha-onibus-${cor}`);
+              const highlightButton = linhaDiv.querySelector(".highlight-button");
+              const individualToggleChecked = document.getElementById(`toggle_${cor}`)?.checked || false;
+
+              const deveDiminuir = (rotaDestacada && rotaDestacada !== cor) || !individualToggleChecked;
+              linhaDiv.classList.toggle("dimmed", deveDiminuir);
+              
+              if (highlightButton) {
+                  highlightButton.textContent = (rotaDestacada === cor) ? "Desfazer" : "Destacar";
+                  highlightButton.style.backgroundColor = (rotaDestacada === cor) ? rotas[cor].cor : "#3498db";
+              }
+              
+              if (individualToggleChecked) {
+                  if (!mapa.hasLayer(camadas[cor].routeLayer)) mapa.addLayer(camadas[cor].routeLayer);
+                  if (!mapa.hasLayer(camadas[cor].busLayer)) mapa.addLayer(camadas[cor].busLayer);
+              } else {
+                  if (mapa.hasLayer(camadas[cor].routeLayer)) mapa.removeLayer(camadas[cor].routeLayer);
+                  if (mapa.hasLayer(camadas[cor].busLayer)) mapa.removeLayer(camadas[cor].busLayer);
+              }
+          
+              const isHighlighted = cor === rotaDestacada;
+              const isDimmed = rotaDestacada && !isHighlighted;
+
+              camadas[cor].routeLayer.eachLayer(layer => {
+                  if (layer instanceof L.Polyline) {
+                      layer.setStyle({ weight: isHighlighted ? 5 : 3, opacity: isDimmed ? 0.2 : 1 });
+                      if (isHighlighted) layer.bringToFront();
+                  }
+              });
+
+              for (const id in camadas[cor].paradaMarkersById) {
+                  const marker = camadas[cor].paradaMarkersById[id];
+                  if (mostrarParadasGeral && individualToggleChecked) {
+                      if (!camadas[cor].routeLayer.hasLayer(marker)) camadas[cor].routeLayer.addLayer(marker);
+                      marker.setIcon(getIconeParada(cor, isHighlighted, id));
+                      marker.setOpacity(isDimmed ? 0.4 : 1);
+                  } else {
+                      if (camadas[cor].routeLayer.hasLayer(marker)) camadas[cor].routeLayer.removeLayer(marker);
+                  }
+              }
+          }
+          
+          onibusAtivos.forEach(onibus => {
+              if (onibus.marcador && camadas[onibus.cor] && mapa.hasLayer(camadas[onibus.cor].busLayer)) {
+                  const isHighlighted = onibus.cor === rotaDestacada;
+                  const emViagem = viagemAtualNoSimulador.onibus_id === onibus.id && viagemAtualNoSimulador.estado === 'EM_VIAGEM';
+                  onibus.marcador.setIcon(getIconeOnibus(onibus.cor, isHighlighted, emViagem));
+                  onibus.marcador.setOpacity(rotaDestacada && !isHighlighted ? 0.4 : 1);
+              }
+          });
+      }
+      
+      function sairModoFoco() {
+          focusModeElements.clearLayers();
+          if (mapa.hasLayer(focusModeElements)) {
+              mapa.removeLayer(focusModeElements);
+          }
+          
+          if (marcadorUsuarioNaParada) {
+            if (mapa.hasLayer(marcadorUsuarioNaParada)) mapa.removeLayer(marcadorUsuarioNaParada);
+            marcadorUsuarioNaParada = null;
+          }
+          
+          if (marcadorOrigemFixo) {
+              if (mapa.hasLayer(marcadorOrigemFixo)) mapa.removeLayer(marcadorOrigemFixo);
+              marcadorOrigemFixo = null;
+          }
+
+          if (onibusEmFoco && onibusEmFoco.marcador) {
+            const onibusAindaExiste = onibusAtivos.find(o => o.id === onibusEmFoco.id);
+            if (onibusAindaExiste) {
+                if(!camadas[onibusEmFoco.cor].busLayer.hasLayer(onibusEmFoco.marcador)){
+                    camadas[onibusEmFoco.cor].busLayer.addLayer(onibusEmFoco.marcador);
+                }
+                onibusEmFoco.marcador.setZIndexOffset(0);
+            }
+            onibusEmFoco = null;
+          }
+
+          for (const cor in camadas) {
+              if (!mapa.hasLayer(camadas[cor].routeLayer)) mapa.addLayer(camadas[cor].routeLayer);
+              if (!mapa.hasLayer(camadas[cor].busLayer)) mapa.addLayer(camadas[cor].busLayer);
+          }
+          
+          document.getElementById("speedSlider").disabled = false;
+          escalaDeTempo = parseFloat(document.getElementById("speedSlider").value);
+          
+          atualizarVisibilidadeMapa();
+
+          const bounds = new L.LatLngBounds();
+          let algumaRotaVisivel = false;
+          for (const cor in camadas) {
+              const individualToggleChecked = document.getElementById(`toggle_${cor}`)?.checked || false;
+              if (individualToggleChecked) {
+                  const polyline = camadas[cor].routeLayer.getLayers().find(l => l instanceof L.Polyline);
+                  if (polyline) {
+                      bounds.extend(polyline.getBounds());
+                      algumaRotaVisivel = true;
+                  }
+              }
+          }
+          if (algumaRotaVisivel) {
+              mapa.fitBounds(bounds, { padding: [50, 50] });
+          } else {
+              mapa.setView([-22.245, -45.705], 15);
+          }
+      }
+
+      function entrarModoFoco(viagem) {
+          Object.values(camadas).forEach(c => {
+              if (mapa.hasLayer(c.routeLayer)) mapa.removeLayer(c.routeLayer);
+              if (mapa.hasLayer(c.busLayer)) mapa.removeLayer(c.busLayer);
+          });
+          
+          focusModeElements.clearLayers();
+
+          const rota = rotas[viagem.linha];
+          if (!rota || viagem.id_origem === undefined || viagem.id_destino === undefined) return;
+          
+          const paradaOrigemCoords = rota.coords[viagem.id_origem];
+          const paradaDestinoCoords = rota.coords[viagem.id_destino];
+
+          if (viagem.estado === 'MONITORANDO' || viagem.estado === 'AGUARDANDO_EMBARQUE') {
+              const zIndexPersonagem = 1600;
+              if (!marcadorUsuarioNaParada) {
+                  marcadorUsuarioNaParada = L.marker(paradaOrigemCoords, { icon: iconePersonagemSelecionado, zIndexOffset: zIndexPersonagem }).addTo(mapa);
+              } else {
+                  marcadorUsuarioNaParada.setLatLng(paradaOrigemCoords);
+                  marcadorUsuarioNaParada.setZIndexOffset(zIndexPersonagem);
+                  if (!mapa.hasLayer(marcadorUsuarioNaParada)) mapa.addLayer(marcadorUsuarioNaParada);
+              }
+          } else if (viagem.estado === 'EM_VIAGEM' || viagem.estado === 'CHEGOU_AO_DESTINO') {
+              if (marcadorUsuarioNaParada && !mapa.hasLayer(marcadorUsuarioNaParada)) {
+                  mapa.addLayer(marcadorUsuarioNaParada); 
+              }
+              if (!marcadorOrigemFixo) {
+                  marcadorOrigemFixo = L.marker(paradaOrigemCoords, { icon: iconesLeaflet.paradaPadrao });
+              }
+              focusModeElements.addLayer(marcadorOrigemFixo);
+              
+              if (viagem.estado === 'CHEGOU_AO_DESTINO') {
+                   if (!marcadorUsuarioNaParada) {
+                      marcadorUsuarioNaParada = L.marker(paradaDestinoCoords, { icon: iconePersonagemSelecionado }).addTo(mapa);
+                  } else {
+                      marcadorUsuarioNaParada.setLatLng(paradaDestinoCoords);
+                  }
+              }
+          } else { 
+             if(marcadorUsuarioNaParada && mapa.hasLayer(marcadorUsuarioNaParada)) mapa.removeLayer(marcadorUsuarioNaParada);
+             marcadorUsuarioNaParada = null;
+          }
+          
+          const coordenadasDoTrajeto = rota.coords.slice(viagem.id_origem, viagem.id_destino + 1);
+          if (coordenadasDoTrajeto.length > 1) {
+              trajetoEspecificoPolyline = L.polyline(coordenadasDoTrajeto, {
+                  color: '#0d6efd', weight: 7, opacity: 0.85
+              });
+              focusModeElements.addLayer(trajetoEspecificoPolyline);
+          }
+
+          rota.paradasIndices.forEach(idDaParada => {
+              if (idDaParada >= viagem.id_origem && idDaParada <= viagem.id_destino) {
+                  const markerOriginal = camadas[viagem.linha].paradaMarkersById[idDaParada];
+                  if (!markerOriginal) return;
+
+                  if (idDaParada === viagem.id_origem) return;
+                  if (idDaParada === viagem.id_destino && viagem.estado === 'CHEGOU_AO_DESTINO') return;
+
+                  let iconParaUsar = (idDaParada === viagem.id_destino) 
+                      ? iconesLeaflet.destino[viagem.linha] 
+                      : iconesLeaflet.paradaPadrao;
+                  
+                  const focusMarker = L.marker(markerOriginal.getLatLng(), { icon: iconParaUsar, zIndexOffset: 100 });
+                  focusMarker.bindPopup(markerOriginal.getPopup());
+                  focusModeElements.addLayer(focusMarker);
+              }
+          });
+          
+          const onibusDaViagem = onibusAtivos.find(o => o.id === viagem.onibus_id);
+          if (onibusDaViagem && onibusDaViagem.marcador) {
+              onibusEmFoco = onibusDaViagem;
+              focusModeElements.addLayer(onibusEmFoco.marcador);
+              
+              const emViagem = viagem.estado === 'EM_VIAGEM';
+              onibusEmFoco.marcador.setIcon(getIconeOnibus(onibusEmFoco.cor, true, emViagem));
+              onibusEmFoco.marcador.setZIndexOffset(2000);
+          }
+          
+          focusModeElements.addTo(mapa);
+          if (trajetoEspecificoPolyline) {
+              const bounds = trajetoEspecificoPolyline.getBounds();
+              if (onibusDaViagem && onibusDaViagem.marcador) {
+                  bounds.extend(onibusDaViagem.marcador.getLatLng());
+              }
+              if (marcadorUsuarioNaParada) {
+                  bounds.extend(marcadorUsuarioNaParada.getLatLng());
+              }
+              mapa.fitBounds(bounds, {padding: [50, 50]});
+          }
+      }
+      
+      // Publica posições e índices das rotas para o backend calcular a viagem.
+      async function enviarPosicoesParaServidor() {
+          if (onibusAtivos.length === 0) return;
+          const posicoes = onibusAtivos.map(onibus => ({
+              id: onibus.id,
+              cor: onibus.cor,
+              lat: onibus.marcador.getLatLng().lat,
+              lng: onibus.marcador.getLatLng().lng,
+              indiceCoordAtual: onibus.indiceCoordAtual
+          }));
+
+          try {
+              await fetch(`${SERVER_URL}/atualizar_posicoes_onibus`, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify(posicoes)
+              });
+          } catch (error) {
+              // console.error("Falha ao enviar posições:", error);
+          }
+      }
+
+      // Sincroniza o painel e o foco do mapa com o estado retornado pela API.
+      async function verificarViagemAtiva() {
+        try {
+            if (Date.now() < suppressServerUpdatesUntil) {
+                return;
+            }
+            if (finalizationTimeout) {
+                clearTimeout(finalizationTimeout);
+                finalizationTimeout = null;
+            }
+
+            const response = await fetch(`${SERVER_URL}/get_viagem_atual`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const viagemServidor = await response.json();
+            
+            const wasInFocusMode = ["MONITORANDO", "AGUARDANDO_EMBARQUE", "EM_VIAGEM", "CHEGOU_AO_DESTINO"].includes(viagemAtualNoSimulador.estado);
+            const isNowInFocusMode = ["MONITORANDO", "AGUARDANDO_EMBARQUE", "EM_VIAGEM", "CHEGOU_AO_DESTINO"].includes(viagemServidor.estado);
+            
+            const previousState = viagemAtualNoSimulador.estado;
+            viagemAtualNoSimulador = viagemServidor;
+
+            if (isNowInFocusMode) {
+                entrarModoFoco(viagemServidor);
+            } else if (wasInFocusMode && !isNowInFocusMode) {
+                sairModoFoco();
+            }
+            
+            atualizarPainelViagem(viagemServidor, previousState);
+
+        } catch (error) {
+            // console.error("Falha ao buscar estado da viagem:", error);
+            if (["MONITORANDO", "AGUARDANDO_EMBARQUE", "EM_VIAGEM", "CHEGOU_AO_DESTINO"].includes(viagemAtualNoSimulador.estado)) {
+                sairModoFoco();
+            }
+            viagemAtualNoSimulador = { estado: 'IDLE' };
+            atualizarPainelViagem(viagemAtualNoSimulador);
+        }
+      }
+      
+      function formatarNomeParada(nome) {
+        if (!nome) return '--';
+        return nome.split('(')[0].trim();
+      }
+      
+      function formatarDistancia(metros) {
+        if (metros === undefined || metros < 0) return 'Calculando...';
+        if (metros < 1000) return `~${Math.round(metros)} m`;
+        return `~${(metros / 1000).toFixed(1)} km`;
+      }
+
+      function formatarEta(minutos) {
+        if (minutos === undefined || minutos < 0) return '< 1 min';
+        if (minutos < 1) return `~${Math.round(minutos)} min`;
+        return `~${Math.round(minutos)} min`;
+      }
+      
+      function atualizarPainelViagem(viagem, previousState) {
+        // ADICIONADO: Define um "congelamento" para a barra de progresso ao mudar para 'EM_VIAGEM'
+        if (viagem.estado === 'EM_VIAGEM' && previousState !== 'EM_VIAGEM') {
+            progressBarFreezeUntil = Date.now() + 6500;
+        }
+
+        const painel = document.getElementById('painelViagem');
+        const header = painel.querySelector('.painel-viagem-header');
+        const body = painel.querySelector('.painel-viagem-body');
+        const placeholder = painel.querySelector('.painel-viagem-placeholder');
+        const grid = painel.querySelector('.painel-viagem-grid');
+        const statusBadge = document.getElementById('painelViagemStatusBadge');
+        const iconeViagemEl = document.getElementById('painelViagemIcone');
+        const progressoContainer = document.getElementById('viagemProgressoContainer');
+        const progressoBarra = document.getElementById('viagemProgressoBarra');
+
+        const isViagemAtivaOuIniciando = viagem && viagem.estado && viagem.estado !== 'IDLE';
+        
+        body.classList.toggle('placeholder-centered', !isViagemAtivaOuIniciando);
+        header.style.display = isViagemAtivaOuIniciando ? 'flex' : 'none';
+        grid.style.display = 'none';
+        placeholder.classList.toggle('hidden', isViagemAtivaOuIniciando);
+        statusBadge.style.display = 'none';
+        progressoContainer.style.opacity = '0'; 
+
+        if (!isViagemAtivaOuIniciando) {
+            placeholder.innerHTML = 'Nenhuma viagem iniciada';
+            return;
+        }
+        
+        if (viagem.linha) {
+            iconeViagemEl.style.width = '40px';
+            iconeViagemEl.style.height = '25px';
+        } else {
+            iconeViagemEl.style.width = '30px';
+            iconeViagemEl.style.height = '30px';
+        }
+        
+        ['origem', 'destino', 'distancia', 'eta'].forEach(f => {
+            const el = document.querySelector(`[data-field="${f}"]`);
+            if (el) el.style.display = 'none';
+        });
+
+        try {
+            switch(viagem.estado) {
+                case 'AGUARDANDO_ORIGEM':
+                case 'REPETIR_ORIGEM':
+                    grid.style.display = 'grid';
+                    document.getElementById('painelViagemTitulo').textContent = 'Definindo Rota';
+                    if (iconesLeaflet.definindoRota) iconeViagemEl.src = iconesLeaflet.definindoRota.options.iconUrl;
+                    iconeViagemEl.alt = 'Ícone de definição de rota';
+                    document.querySelector('[data-field="origem"]').style.display = 'block';
+                    document.getElementById('painelViagemOrigem').textContent = viagem.estado === 'REPETIR_ORIGEM' ? 'Tente novamente...' : 'Aguardando origem...';
+                    break;
+
+                case 'AGUARDANDO_DESTINO':
+                case 'REPETIR_DESTINO':
+                    grid.style.display = 'grid';
+                    document.getElementById('painelViagemTitulo').textContent = 'Definindo Rota';
+                    if (iconesLeaflet.definindoRota) iconeViagemEl.src = iconesLeaflet.definindoRota.options.iconUrl;
+                    document.querySelector('[data-field="origem"]').style.display = 'block';
+                    document.getElementById('painelViagemOrigem').textContent = formatarNomeParada(viagem.origem.nome);
+                    document.querySelector('[data-field="destino"]').style.display = 'block';
+                    document.getElementById('painelViagemDestino').textContent = viagem.estado === 'REPETIR_DESTINO' ? 'Tente novamente...' : 'Aguardando destino...';
+                    break;
+                
+                case 'MONITORANDO':
+                case 'AGUARDANDO_EMBARQUE':
+                case 'EM_VIAGEM':
+                case 'CHEGOU_AO_DESTINO':
+                    if (!viagem.linha || !rotas[viagem.linha]) {
+                        placeholder.classList.remove('hidden');
+                        placeholder.textContent = 'Calculando rota...';
+                        grid.style.display = 'none';
+                        header.style.display = 'flex';
+                        document.getElementById('painelViagemTitulo').textContent = 'Aguarde...';
+                        if (iconesLeaflet.definindoRota) iconeViagemEl.src = iconesLeaflet.definindoRota.options.iconUrl;
+                        break;
+                    }
+
+                    grid.style.display = 'grid';
+                    document.getElementById('painelViagemTitulo').textContent = `Linha ${rotas[viagem.linha].titulo}`;
+                    if (iconData.onibusUrls) iconeViagemEl.src = iconData.onibusUrls[viagem.linha];
+                    ['origem', 'destino', 'distancia', 'eta'].forEach(f => document.querySelector(`[data-field="${f}"]`).style.display = 'block');
+                    
+                    document.getElementById('painelViagemOrigem').textContent = formatarNomeParada(viagem.origem.nome);
+                    document.getElementById('painelViagemDestino').textContent = formatarNomeParada(viagem.destino.nome);
+                    document.getElementById('painelViagemEta').textContent = formatarEta(viagem.eta_minutos);
+                    
+                    const rota = rotas[viagem.linha];
+                    const distTotalTrajeto = rota.distanciasAcumuladas[viagem.id_destino] - rota.distanciasAcumuladas[viagem.id_origem];
+                    
+                    let progresso = 0;
+                    // ADICIONADO: Lógica para respeitar o "congelamento"
+                    if (Date.now() < progressBarFreezeUntil) {
+                        progresso = 0;
+                    } else if (distTotalTrajeto > 0 && viagem.estado === 'EM_VIAGEM') {
+                        const distanciaRestante = viagem.distancia_onibus; 
+                        const distanciaPercorrida = distTotalTrajeto - distanciaRestante;
+                        progresso = (distanciaPercorrida / distTotalTrajeto) * 100;
+                    }
+
+                    statusBadge.style.display = 'inline-block';
+                    if (viagem.estado === 'MONITORANDO') {
+                        statusBadge.textContent = "Aguardando Ônibus";
+                        statusBadge.className = "viagem-status-badge badge-aguardando";
+                        document.getElementById('painelViagemDistancia').textContent = `${formatarDistancia(viagem.distancia_onibus)} da origem`;
+                    } else if (viagem.estado === 'AGUARDANDO_EMBARQUE') {
+                        statusBadge.textContent = "EMBARQUE!";
+                        statusBadge.className = "viagem-status-badge badge-embarque";
+                        document.getElementById('painelViagemDistancia').textContent = 'Ônibus na sua parada';
+                    } else if (viagem.estado === 'EM_VIAGEM') {
+                        statusBadge.textContent = "Em Viagem";
+                        statusBadge.className = "viagem-status-badge badge-em-viagem";
+                        document.getElementById('painelViagemDistancia').textContent = `${formatarDistancia(viagem.distancia_onibus)} do destino`;
+                    } else if (viagem.estado === 'CHEGOU_AO_DESTINO') {
+                         statusBadge.textContent = "DESEMBARQUE!";
+                         statusBadge.className = "viagem-status-badge badge-desembarque";
+                         document.getElementById('painelViagemDistancia').textContent = 'Você chegou ao seu destino';
+                         progresso = 100;
+                    }
+
+                    progressoContainer.style.opacity = 1;
+                    progressoBarra.style.width = `${Math.min(100, Math.max(0, progresso))}%`;
+                    break;
+                
+                case 'FINALIZADO_SUCESSO':
+                    if (previousState !== 'FINALIZADO_SUCESSO') {
+                        document.getElementById('painelViagemTitulo').textContent = `Viagem Concluída`;
+                        if (viagem.linha && iconData.onibusUrls) {
+                            iconeViagemEl.src = iconData.onibusUrls[viagem.linha];
+                        }
+                        grid.style.display = 'none';
+                        placeholder.classList.remove('hidden');
+                        placeholder.innerHTML = `
+                          <div>
+                            <div class="viagem-finalizada-texto">VIAGEM FINALIZADA</div>
+                            <div class="viagem-finalizada-agradecimento">Obrigado por utilizar o SmartWay!</div>
+                          </div>
+                        `;
+                        
+                        suppressServerUpdatesUntil = Date.now() + 5000;
+                        
+                        finalizationTimeout = setTimeout(() => {
+                            atualizarPainelViagem({ estado: 'IDLE' });
+                            finalizationTimeout = null;
+                        }, 5000);
+                    }
+                    break;
+
+                case 'FINALIZADO_ERRO':
+                case 'FINALIZADO_ERRO_ORDEM':
+                case 'FINALIZADO_ERRO_SEM_ONIBUS':
+                    if (previousState !== viagem.estado) {
+                        document.getElementById('painelViagemTitulo').textContent = 'Erro na Rota';
+                        if (iconesLeaflet.erroRota) iconeViagemEl.src = iconesLeaflet.erroRota.options.iconUrl;
+                        grid.style.display = 'none';
+                        placeholder.classList.remove('hidden');
+
+                        let mensagemErro = 'Não foi possível encontrar uma rota.';
+                        if (viagem.estado === 'FINALIZADO_ERRO_ORDEM') {
+                            mensagemErro = 'Destino vem antes da origem.';
+                        } else if (viagem.estado === 'FINALIZADO_ERRO_SEM_ONIBUS') {
+                            mensagemErro = 'Nenhum ônibus disponível no momento.';
+                        }
+                        placeholder.textContent = mensagemErro;
+
+                        suppressServerUpdatesUntil = Date.now() + 5000;
+                        finalizationTimeout = setTimeout(() => {
+                            atualizarPainelViagem({ estado: 'IDLE' });
+                            finalizationTimeout = null;
+                        }, 5000);
+                    }
+                    break;
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar painel:", error, viagem);
+            placeholder.textContent = 'Erro ao exibir dados.';
+        }
+      }
+      
+      const timelineContainer = document.getElementById("timelineContainer");
+      const timelineHandle = document.getElementById("timelineHandle");
+      const timelineBar = document.getElementById("timelineBar");
+      const totalMinutosDia = configSimulacao.MAX_HORA_SIMULACAO - configSimulacao.MIN_HORA_SIMULACAO;
+
+      const atualizarLinhaTempo = () => {
+        const progresso = (tempoSimulacaoEmMinutos - configSimulacao.MIN_HORA_SIMULACAO) / totalMinutosDia;
+        const larguraContainer = timelineContainer.offsetWidth;
+        const novaPosicao = progresso * larguraContainer;
+        timelineBar.style.width = `${novaPosicao}px`;
+        timelineHandle.style.left = `${novaPosicao}px`;
+      };
+
+      const setupTimeline = () => {
+        let isDragging = false;
+        let wasPausedBeforeDrag = false;
+        timelineContainer.addEventListener("mousedown", (e) => {
+          if (e.target.id === "timelineHandle") { isDragging = true; wasPausedBeforeDrag = estaPausado; estaPausado = true; } 
+          else { const rect = timelineContainer.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const progresso = mouseX / rect.width; definirHorario(configSimulacao.MIN_HORA_SIMULACAO + progresso * totalMinutosDia); }
+        });
+        document.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+          const rect = timelineContainer.getBoundingClientRect();
+          let mouseX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+          const progresso = mouseX / rect.width;
+          tempoSimulacaoEmMinutos = configSimulacao.MIN_HORA_SIMULACAO + progresso * totalMinutosDia;
+          atualizarLinhaTempo();
+          atualizarMostradorRelogio();
+        });
+        document.addEventListener("mouseup", () => {
+          if (isDragging) { reiniciarEstadoDiario(tempoSimulacaoEmMinutos); if (!wasPausedBeforeDrag) estaPausado = false; }
+          isDragging = false;
+        });
+        atualizarLinhaTempo();
+      };
+
+      // Inicializa mapa e controles; inicia as duas consultas periódicas à API.
+      document.addEventListener("DOMContentLoaded", async () => {
+        await carregarDados();
+        prepararIcones();
+        
+        mapa = L.map("map", { attributionControl: false }).setView([-22.245, -45.705], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {}).addTo(mapa);
+        
+        mapa.on('popupopen', (e) => {
+          if (e.popup && e.popup._source && e.popup._source.paradaInfo) {
+            popupAbertoAtualmente = { 
+              popup: e.popup, 
+              paradaInfo: e.popup._source.paradaInfo 
+            };
+          }
+        });
+        mapa.on('popupclose', () => {
+          popupAbertoAtualmente = null;
+        });
+        
+        configurarInterface();
+        
+        document.getElementById("btnStart").onclick = iniciarSimulacao;
+        document.getElementById("btnStop").onclick = alternarPausa;
+        document.getElementById("speedSlider").oninput = (e) => { escalaDeTempo = parseFloat(e.target.value); };
+        
+        const horarioPopup = document.getElementById("horarioPopup");
+        document.getElementById("horarioPopupClose").addEventListener('click', () => { horarioPopup.style.display = 'none'; });
+        document.addEventListener('click', (event) => { if (!horarioPopup.contains(event.target) && !event.target.classList.contains('horario-button')) { horarioPopup.style.display = 'none'; } });
+
+        document.getElementById("statusContainer").addEventListener("click", (e) => {
+            const alvo = e.target;
+            const cor = alvo.dataset.cor;
+
+            if (alvo.classList.contains("horario-button")) {
+              e.stopPropagation();
+              const rota = rotas[cor];
+              if (rota) {
+                document.getElementById("horarioPopupTitle").textContent = rota.titulo;
+                horarioPopup.querySelector(".times").innerHTML = rota.horariosPartida.map((h) => `<span class="time-chip">${h}</span>`).join("");
+                const card = alvo.closest('.linha-onibus');
+                horarioPopup.style.top = `${card.offsetTop + card.offsetHeight + 10}px`;
+                horarioPopup.style.display = "block";
+              }
+            } else if (alvo.classList.contains("highlight-button")) {
+              if (rotaDestacada === cor) removerDestaque(); else aplicarDestaque(cor);
+            } else if (alvo.classList.contains("visibility-toggle")) {
+              atualizarVisibilidadeMapa();
+            }
+        });
+        document.getElementById("toggleParadas").addEventListener("change", atualizarVisibilidadeMapa);
+        
+        document.querySelector('.personagem-grid').addEventListener('click', (e) => {
+            const item = e.target.closest('.personagem-item');
+            if (!item) return;
+
+            document.querySelectorAll('.personagem-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+
+            idPersonagemSelecionado = parseInt(item.dataset.personagemId);
+            iconePersonagemSelecionado = iconesLeaflet.personagens[idPersonagemSelecionado];
+            
+            if (marcadorUsuarioNaParada && mapa.hasLayer(marcadorUsuarioNaParada)) {
+                marcadorUsuarioNaParada.setIcon(iconePersonagemSelecionado);
+            }
+        });
+        
+        setInterval(verificarViagemAtiva, 100);
+        setInterval(enviarPosicoesParaServidor, 100);
+        
+        atualizarVisibilidadeMapa();
+        atualizarPainelViagem({estado: 'IDLE'});
+      });
+    </script>
+  </body>
+</html>
