@@ -72,7 +72,7 @@ flowchart LR
 | **Simulador** | Desenha quatro linhas no mapa, move ônibus e envia as posições ao servidor. | [Software](software/README.md) |
 | **Placa e case** | Layout da PCB, esquemático documental alinhado a ela e duas peças STL da caixa. | [Hardware](hardware/README.md) |
 
-**O rastreamento desta versão vem do simulador.** Não há integração com GPS ou dados de uma frota real. O servidor mantém a viagem somente em memória; reiniciá-lo encerra o acompanhamento em curso.
+**O rastreamento desta versão vem do simulador.** Não há integração com GPS ou dados de uma frota real. O servidor mantém a viagem somente em memória, e reiniciá-lo encerra o acompanhamento em curso.
 
 <a id="execucao"></a>
 
@@ -82,7 +82,7 @@ Os comandos abaixo são para **PowerShell no Windows**. O servidor espera encont
 
 ### 1. Prepare o Python
 
-Use Python 3.11, instale FFmpeg no sistema e confirme que o comando `ffmpeg` está disponível no terminal. As versões exatas das bibliotecas do projeto original não foram registradas.
+Use Python 3.11, instale FFmpeg no sistema e confirme que o comando `ffmpeg` está disponível no terminal.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -110,9 +110,9 @@ Abra `http://localhost:8000/simulador.html` e inicie a simulação. O HTML preci
 
 ### 4. Conecte a pulseira
 
-O firmware depende de uma placa ESP32 compatível, microfone I2S, DFPlayer Mini com cartão SD, botão, LED e motor de vibração. Instale o suporte ESP32 no Arduino IDE e as bibliotecas **ArduinoJson** e **DFRobotDFPlayerMini**. Os arquivos MP3 das quinze mensagens não vieram com o material recebido.
+O firmware depende de uma placa ESP32 compatível, microfone I2S, DFPlayer Mini com cartão SD, botão, LED e motor de vibração. Instale o suporte ESP32 no Arduino IDE e as bibliotecas **ArduinoJson** e **DFRobotDFPlayerMini**. Os arquivos MP3 das quinze mensagens não estão disponíveis neste repositório, mas podem ser gravados manualmente.
 
-O firmware e o simulador contêm um IP fixo do servidor; o firmware também contém as credenciais da rede usada no protótipo. Esses valores precisam corresponder à rede da demonstração. Veja os [pinos e dependências](firmware/README.md) e os [detalhes do servidor](software/README.md).
+O firmware e o simulador contêm um IP fixo do servidor, e o firmware também contém as credenciais da rede usada no protótipo. Esses valores precisam corresponder à rede da demonstração. Veja os [pinos e dependências](firmware/README.md) e os [detalhes do servidor](software/README.md).
 
 <a id="arquivos"></a>
 
